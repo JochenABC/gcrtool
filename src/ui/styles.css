@@ -1,0 +1,408 @@
+/* GCR Tool - Minimal Functional CSS */
+
+.gcr-decoder,
+.gcr-encoder {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  max-width: 800px;
+}
+
+/* Sections */
+.gcr-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.gcr-section h3 {
+  margin: 0 0 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gcr-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.gcr-section-header h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Form elements */
+.gcr-input,
+.gcr-select,
+.gcr-textarea {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.gcr-input:focus,
+.gcr-select:focus,
+.gcr-textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.gcr-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.gcr-input-wide {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.gcr-btn {
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.gcr-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.gcr-btn-primary {
+  background: #0066cc;
+  border-color: #0066cc;
+  color: #fff;
+}
+
+.gcr-btn-primary:hover {
+  background: #0052a3;
+  border-color: #0052a3;
+}
+
+.gcr-btn-add {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.gcr-btn-remove {
+  font-size: 12px;
+  padding: 4px 10px;
+  color: #cc0000;
+  border-color: #cc0000;
+}
+
+.gcr-btn-remove:hover {
+  background: #fff0f0;
+}
+
+/* Form layout */
+.gcr-form-row {
+  margin-bottom: 12px;
+}
+
+.gcr-form-row label {
+  display: block;
+}
+
+.gcr-form-row .gcr-input,
+.gcr-form-row .gcr-select {
+  margin-top: 4px;
+  display: block;
+}
+
+.gcr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.gcr-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gcr-form-grid .gcr-input,
+.gcr-form-grid .gcr-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Input section (decoder) */
+.gcr-input-section {
+  margin-bottom: 20px;
+}
+
+.gcr-input-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.gcr-input-section .gcr-btn {
+  margin-top: 10px;
+}
+
+/* Output */
+.gcr-output {
+  margin-top: 20px;
+}
+
+.gcr-output-textarea {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Fields display (decoder) */
+.gcr-field {
+  margin-bottom: 8px;
+}
+
+.gcr-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.gcr-value {
+  margin-left: 8px;
+}
+
+/* Flight display (decoder) */
+.gcr-flight {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.gcr-flight:last-child {
+  margin-bottom: 0;
+}
+
+.gcr-flight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.gcr-action {
+  display: inline-block;
+  padding: 2px 8px;
+  font-weight: bold;
+  font-size: 13px;
+  border-radius: 3px;
+  background: #e0e0e0;
+}
+
+.gcr-action-n { background: #d4edda; color: #155724; }
+.gcr-action-k { background: #d4edda; color: #155724; }
+.gcr-action-d { background: #f8d7da; color: #721c24; }
+.gcr-action-x { background: #f8d7da; color: #721c24; }
+.gcr-action-c { background: #fff3cd; color: #856404; }
+.gcr-action-r { background: #fff3cd; color: #856404; }
+.gcr-action-h { background: #cce5ff; color: #004085; }
+.gcr-action-u { background: #f5c6cb; color: #721c24; }
+.gcr-action-w { background: #f5c6cb; color: #721c24; }
+
+.gcr-identifier {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.gcr-direction {
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.gcr-arrival { background: #cce5ff; color: #004085; }
+.gcr-departure { background: #e2e3e5; color: #383d41; }
+
+.gcr-flight-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.gcr-slot-id {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Flight form (encoder) */
+.gcr-flight-form {
+  margin-bottom: 15px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.gcr-flight-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.gcr-flights-container {
+  margin-top: 15px;
+}
+
+/* Errors */
+.gcr-error {
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  color: #721c24;
+}
+
+.gcr-errors {
+  margin-bottom: 15px;
+}
+
+.gcr-errors:empty {
+  display: none;
+}
+
+/* Reply Banner */
+.gcr-reply-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d0e8f7 100%);
+  border: 1px solid #b3d4e8;
+  border-radius: 6px;
+  color: #0a4a6e;
+}
+
+.gcr-reply-icon {
+  font-size: 20px;
+  color: #0066cc;
+}
+
+.gcr-reply-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.gcr-mixed-banner {
+  background: linear-gradient(135deg, #fff8e6 0%, #ffecb3 100%);
+  border-color: #f5c000;
+  color: #7a5c00;
+}
+
+.gcr-mixed-banner .gcr-reply-icon {
+  color: #d4a600;
+}
+
+/* Reply Section Styling */
+.gcr-reply-section {
+  border-left: 4px solid #0066cc;
+}
+
+.gcr-reply-flight {
+  position: relative;
+  border: none;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Reply Header with Status */
+.gcr-reply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gcr-reply-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcr-status-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Status-specific colors */
+.gcr-status-confirmed .gcr-status-text { color: #155724; }
+.gcr-status-refused .gcr-status-text { color: #721c24; }
+.gcr-status-held .gcr-status-text { color: #004085; }
+.gcr-status-cancelled .gcr-status-text { color: #721c24; }
+.gcr-status-error .gcr-status-text { color: #721c24; }
+
+/* Flight-level status borders */
+.gcr-reply-confirmed { border-left: 4px solid #28a745; }
+.gcr-reply-refused { border-left: 4px solid #dc3545; }
+.gcr-reply-held { border-left: 4px solid #007bff; }
+.gcr-reply-cancelled { border-left: 4px solid #6c757d; }
+.gcr-reply-error { border-left: 4px solid #dc3545; }
+
+/* Prominent Slot ID Display */
+.gcr-reply-slot-id {
+  background: #f0f7ff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #cce5ff;
+}
+
+.gcr-slot-id-value {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  font-size: 14px;
+  color: #0066cc;
+  letter-spacing: 0.5px;
+}
+
+.gcr-reply-no-slot {
+  color: #856404;
+  background: #fff3cd;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Reply Flight Info Grid */
+.gcr-reply-flight-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
