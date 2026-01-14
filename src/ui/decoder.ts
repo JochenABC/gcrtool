@@ -1,5 +1,5 @@
-import { GcrCodec, isParseError, GcrMessage, GcrFlightLine, GcrParseError } from '../codec';
-import { ACTION_CODE_DESCRIPTIONS, FLIGHT_TYPE_DESCRIPTIONS, REPLY_STATUS_INFO, StatusClass } from '../codec/constants';
+import { GcrCodec, isParseError, GcrMessage, GcrFlightLine } from '../codec';
+import { ACTION_CODE_DESCRIPTIONS, MONTHS } from '../codec/constants';
 import type { ActionCode } from '../codec/types';
 
 export class DecoderUI {
@@ -22,37 +22,43 @@ export class DecoderUI {
     this.container.innerHTML = '';
     this.container.classList.add('gcr-decoder');
 
+    // Flex container for side-by-side layout
+    const parseContainer = document.createElement('div');
+    parseContainer.className = 'gcr-parse-container';
+
     const inputSection = document.createElement('div');
     inputSection.className = 'gcr-input-section';
 
     const label = document.createElement('label');
-    label.textContent = 'Paste GCR message:';
+    label.textContent = 'Paste GCR request or reply:';
     label.htmlFor = 'gcr-input';
 
     this.textarea.id = 'gcr-input';
     this.textarea.className = 'gcr-textarea';
     this.textarea.placeholder = 'GCR\n/FLT\nEDDF\nNABC123 08JUN 010G159 LSZH0900 D\nGI BRGDS';
     this.textarea.rows = 10;
+    this.textarea.addEventListener('input', () => this.decode());
 
-    const decodeBtn = document.createElement('button');
-    decodeBtn.className = 'gcr-btn';
-    decodeBtn.textContent = 'Decode';
-    decodeBtn.addEventListener('click', () => this.decode());
+    const parseBtn = document.createElement('button');
+    parseBtn.className = 'gcr-btn gcr-btn-primary';
+    parseBtn.textContent = 'Parse';
+    parseBtn.addEventListener('click', () => this.decode());
 
     inputSection.appendChild(label);
     inputSection.appendChild(this.textarea);
-    inputSection.appendChild(decodeBtn);
+    inputSection.appendChild(parseBtn);
 
     this.outputDiv.className = 'gcr-output';
 
-    this.container.appendChild(inputSection);
-    this.container.appendChild(this.outputDiv);
+    parseContainer.appendChild(inputSection);
+    parseContainer.appendChild(this.outputDiv);
+    this.container.appendChild(parseContainer);
   }
 
   private decode(): void {
     const text = this.textarea.value.trim();
     if (!text) {
-      this.showError('Please enter a GCR message');
+      this.outputDiv.innerHTML = '';
       return;
     }
 
@@ -86,205 +92,302 @@ export class DecoderUI {
   }
 
   private showRequestResult(message: GcrMessage): void {
-    // Header section
+    const allFlights = this.getAllFlights(message);
+    const commonAircraft = this.getCommonAircraft(allFlights);
+    const commonIdentifier = this.getCommonIdentifier(allFlights);
+
+    // Combined header section
     const headerDiv = document.createElement('div');
-    headerDiv.className = 'gcr-section';
-    headerDiv.innerHTML = `
-      <h3>Header</h3>
-      <div class="gcr-field"><span class="gcr-label">Type:</span> <span class="gcr-value">GCR</span></div>
-      <div class="gcr-field"><span class="gcr-label">Identifier:</span> <span class="gcr-value">${message.header.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}</span></div>
-      <div class="gcr-field"><span class="gcr-label">Coordination Airport:</span> <span class="gcr-value">${message.header.airport}</span></div>
+    headerDiv.className = 'gcr-section gcr-header-section';
+
+    let headerContent = `
+      <div class="gcr-header-line"><span class="gcr-header-label">Type</span> <span class="gcr-header-value">Request</span></div>
+      <div class="gcr-header-line"><span class="gcr-header-label">Airport</span> <span class="gcr-header-value">${message.header.airport}</span></div>
     `;
+    if (commonIdentifier) {
+      const idLabel = message.header.identifierType === 'FLT' ? 'Flight' : 'Registration';
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">${idLabel}</span> <span class="gcr-header-value">${commonIdentifier}</span></div>`;
+    }
+    if (commonAircraft) {
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">Aircraft</span> <span class="gcr-header-value">${commonAircraft.type} (${commonAircraft.seats} seats)</span></div>`;
+    }
+    headerDiv.innerHTML = headerContent;
     this.outputDiv.appendChild(headerDiv);
 
-    // Airport sections
-    for (const section of message.airportSections) {
-      const sectionDiv = document.createElement('div');
-      sectionDiv.className = 'gcr-section';
-
-      const sectionHeader = document.createElement('h3');
-      sectionHeader.textContent = `Airport: ${section.airport}`;
-      sectionDiv.appendChild(sectionHeader);
-
-      for (const flight of section.flights) {
-        sectionDiv.appendChild(this.renderFlight(flight, message.header.identifierType));
-      }
-
-      this.outputDiv.appendChild(sectionDiv);
-    }
+    // Flights table
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'gcr-results-table-wrapper';
+    tableWrapper.appendChild(this.renderResultsTable(allFlights, message.header.identifierType, !commonAircraft, !commonIdentifier));
+    this.outputDiv.appendChild(tableWrapper);
 
     this.renderFootnotes(message);
   }
 
   private showReplyResult(message: GcrMessage): void {
-    // Coordinator response banner
-    const bannerDiv = document.createElement('div');
-    bannerDiv.className = 'gcr-reply-banner';
-    bannerDiv.innerHTML = `
-      <span class="gcr-reply-icon">&#8617;</span>
-      <span class="gcr-reply-title">Coordinator Response</span>
-    `;
-    this.outputDiv.appendChild(bannerDiv);
+    const allFlights = this.getAllFlights(message);
+    const commonAircraft = this.getCommonAircraft(allFlights);
+    const commonIdentifier = this.getCommonIdentifier(allFlights);
 
-    // Header section
+    // Combined header section
     const headerDiv = document.createElement('div');
-    headerDiv.className = 'gcr-section gcr-reply-section';
-    headerDiv.innerHTML = `
-      <h3>Response Details</h3>
-      <div class="gcr-field"><span class="gcr-label">Identifier Type:</span> <span class="gcr-value">${message.header.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}</span></div>
-      <div class="gcr-field"><span class="gcr-label">Coordination Airport:</span> <span class="gcr-value">${message.header.airport}</span></div>
+    headerDiv.className = 'gcr-section gcr-header-section gcr-reply-section';
+
+    let headerContent = `
+      <div class="gcr-header-line"><span class="gcr-header-label">Type</span> <span class="gcr-header-value">Coordinator Response</span></div>
+      <div class="gcr-header-line"><span class="gcr-header-label">Airport</span> <span class="gcr-header-value">${message.header.airport}</span></div>
     `;
+    if (commonIdentifier) {
+      const idLabel = message.header.identifierType === 'FLT' ? 'Flight' : 'Registration';
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">${idLabel}</span> <span class="gcr-header-value">${commonIdentifier}</span></div>`;
+    }
+    if (commonAircraft) {
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">Aircraft</span> <span class="gcr-header-value">${commonAircraft.type} (${commonAircraft.seats} seats)</span></div>`;
+    }
+    headerDiv.innerHTML = headerContent;
     this.outputDiv.appendChild(headerDiv);
 
-    // Airport sections with reply-specific rendering
-    for (const section of message.airportSections) {
-      const sectionDiv = document.createElement('div');
-      sectionDiv.className = 'gcr-section gcr-reply-section';
-
-      const sectionHeader = document.createElement('h3');
-      sectionHeader.textContent = `Airport: ${section.airport}`;
-      sectionDiv.appendChild(sectionHeader);
-
-      for (const flight of section.flights) {
-        sectionDiv.appendChild(this.renderReplyFlight(flight, message.header.identifierType));
-      }
-
-      this.outputDiv.appendChild(sectionDiv);
-    }
+    // Flights table
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'gcr-results-table-wrapper';
+    tableWrapper.appendChild(this.renderResultsTable(allFlights, message.header.identifierType, !commonAircraft, !commonIdentifier));
+    this.outputDiv.appendChild(tableWrapper);
 
     this.renderFootnotes(message);
   }
 
   private showMixedResult(message: GcrMessage): void {
-    // Mixed response banner (request + reply codes)
-    const bannerDiv = document.createElement('div');
-    bannerDiv.className = 'gcr-reply-banner gcr-mixed-banner';
-    bannerDiv.innerHTML = `
-      <span class="gcr-reply-icon">&#8617;</span>
-      <span class="gcr-reply-title">Coordinator Response with Alternative</span>
-    `;
-    this.outputDiv.appendChild(bannerDiv);
+    const allFlights = this.getAllFlights(message);
+    const commonAircraft = this.getCommonAircraft(allFlights);
+    const commonIdentifier = this.getCommonIdentifier(allFlights);
 
-    // Header section
+    // Combined header section
     const headerDiv = document.createElement('div');
-    headerDiv.className = 'gcr-section gcr-reply-section';
-    headerDiv.innerHTML = `
-      <h3>Response Details</h3>
-      <div class="gcr-field"><span class="gcr-label">Identifier Type:</span> <span class="gcr-value">${message.header.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}</span></div>
-      <div class="gcr-field"><span class="gcr-label">Coordination Airport:</span> <span class="gcr-value">${message.header.airport}</span></div>
+    headerDiv.className = 'gcr-section gcr-header-section gcr-mixed-section';
+
+    let headerContent = `
+      <div class="gcr-header-line"><span class="gcr-header-label">Type:</span> <span class="gcr-header-value">Response with Alternative</span></div>
+      <div class="gcr-header-line"><span class="gcr-header-label">Airport:</span> <span class="gcr-header-value">${message.header.airport}</span></div>
     `;
+    if (commonIdentifier) {
+      const idLabel = message.header.identifierType === 'FLT' ? 'Flight:' : 'Registration:';
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">${idLabel}</span> <span class="gcr-header-value">${commonIdentifier}</span></div>`;
+    }
+    if (commonAircraft) {
+      headerContent += `<div class="gcr-header-line"><span class="gcr-header-label">Aircraft:</span> <span class="gcr-header-value">${commonAircraft.type} (${commonAircraft.seats} seats)</span></div>`;
+    }
+    headerDiv.innerHTML = headerContent;
     this.outputDiv.appendChild(headerDiv);
 
-    // Airport sections with reply-specific rendering
-    for (const section of message.airportSections) {
-      const sectionDiv = document.createElement('div');
-      sectionDiv.className = 'gcr-section gcr-reply-section';
-
-      const sectionHeader = document.createElement('h3');
-      sectionHeader.textContent = `Airport: ${section.airport}`;
-      sectionDiv.appendChild(sectionHeader);
-
-      for (const flight of section.flights) {
-        sectionDiv.appendChild(this.renderReplyFlight(flight, message.header.identifierType));
-      }
-
-      this.outputDiv.appendChild(sectionDiv);
-    }
+    // Flights table
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'gcr-results-table-wrapper';
+    tableWrapper.appendChild(this.renderResultsTable(allFlights, message.header.identifierType, !commonAircraft, !commonIdentifier));
+    this.outputDiv.appendChild(tableWrapper);
 
     this.renderFootnotes(message);
   }
 
   private renderFootnotes(message: GcrMessage): void {
-    if (message.footnotes.length > 0) {
-      const footnotesDiv = document.createElement('div');
-      footnotesDiv.className = 'gcr-section';
-      footnotesDiv.innerHTML = '<h3>Footnotes</h3>';
+    const siNotes = message.footnotes.filter(f => f.type === 'SI');
+    const giNotes = message.footnotes.filter(f => f.type === 'GI');
 
-      for (const footnote of message.footnotes) {
+    if (siNotes.length === 0 && giNotes.length === 0) return;
+
+    const footnotesDiv = document.createElement('div');
+    footnotesDiv.className = 'gcr-section gcr-footnote-section';
+    footnotesDiv.innerHTML = '<h3>Notes</h3>';
+
+    // SI (Supplementary Information)
+    if (siNotes.length > 0) {
+      const siGroup = document.createElement('div');
+      siGroup.className = 'gcr-footnote-group';
+      siGroup.innerHTML = `
+        <h4>Supplementary Information (SI)</h4>
+        <p class="gcr-footnote-desc">Flight-specific operational details and requirements.</p>
+      `;
+      for (const note of siNotes) {
         const noteDiv = document.createElement('div');
-        noteDiv.className = 'gcr-field';
-        noteDiv.innerHTML = `<span class="gcr-label">${footnote.type}:</span> <span class="gcr-value">${footnote.text}</span>`;
-        footnotesDiv.appendChild(noteDiv);
+        noteDiv.className = 'gcr-footnote-text';
+        noteDiv.textContent = note.text;
+        siGroup.appendChild(noteDiv);
+      }
+      footnotesDiv.appendChild(siGroup);
+    }
+
+    // GI (General Information)
+    if (giNotes.length > 0) {
+      const giGroup = document.createElement('div');
+      giGroup.className = 'gcr-footnote-group';
+      giGroup.innerHTML = `
+        <h4>General Information (GI)</h4>
+        <p class="gcr-footnote-desc">General remarks and administrative notes.</p>
+      `;
+      for (const note of giNotes) {
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'gcr-footnote-text';
+        noteDiv.textContent = note.text;
+        giGroup.appendChild(noteDiv);
+      }
+      footnotesDiv.appendChild(giGroup);
+    }
+
+    this.outputDiv.appendChild(footnotesDiv);
+  }
+
+  private getAllFlights(message: GcrMessage): GcrFlightLine[] {
+    const flights: GcrFlightLine[] = [];
+    for (const section of message.airportSections) {
+      flights.push(...section.flights);
+    }
+    return flights;
+  }
+
+  private getCommonAircraft(flights: GcrFlightLine[]): { type: string; seats: number } | null {
+    if (flights.length === 0) return null;
+    const firstType = flights[0].aircraftType;
+    const firstSeats = flights[0].seatCount;
+    const allSame = flights.every(f => f.aircraftType === firstType && f.seatCount === firstSeats);
+    return allSame ? { type: firstType, seats: firstSeats } : null;
+  }
+
+  private getCommonIdentifier(flights: GcrFlightLine[]): string | null {
+    if (flights.length === 0) return null;
+    const firstId = flights[0].identifier;
+    const allSame = flights.every(f => f.identifier === firstId);
+    return allSame ? firstId : null;
+  }
+
+  private sortFlightsByDateTime(flights: GcrFlightLine[]): GcrFlightLine[] {
+    return [...flights].sort((a, b) => {
+      // Parse date (DDMMM format, e.g., "08JUN")
+      const dayA = parseInt(a.date.slice(0, 2), 10);
+      const monthA = MONTHS.indexOf(a.date.slice(2).toUpperCase());
+      const dayB = parseInt(b.date.slice(0, 2), 10);
+      const monthB = MONTHS.indexOf(b.date.slice(2).toUpperCase());
+
+      // Compare by month first, then day, then time
+      if (monthA !== monthB) return monthA - monthB;
+      if (dayA !== dayB) return dayA - dayB;
+
+      // Parse time (HHMM format)
+      const timeA = parseInt(a.time, 10);
+      const timeB = parseInt(b.time, 10);
+      return timeA - timeB;
+    });
+  }
+
+  private getStatusText(actionCode: ActionCode): string {
+    return ACTION_CODE_DESCRIPTIONS[actionCode] || actionCode;
+  }
+
+  private copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      // Brief visual feedback could be added here
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err);
+    });
+  }
+
+  private renderResultsTable(flights: GcrFlightLine[], identifierType: string, showAircraft: boolean, showIdentifier: boolean = true): HTMLElement {
+    const table = document.createElement('table');
+    table.className = 'gcr-results-table';
+
+    // Sort flights by date and time (oldest first)
+    const sortedFlights = this.sortFlightsByDateTime(flights);
+
+    // Header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    const headers = ['Status'];
+    if (showIdentifier) headers.push(identifierType === 'FLT' ? 'Flight' : 'Reg');
+    headers.push('Date', 'Time', 'Dir', 'From/To');
+    if (showAircraft) headers.push('Aircraft');
+    headers.push('Slot ID');
+
+    for (const h of headers) {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Body rows
+    const tbody = document.createElement('tbody');
+    for (const flight of sortedFlights) {
+      const row = document.createElement('tr');
+      const direction = flight.isArrival ? 'Arrival' : 'Departure';
+      const timeFormatted = `${flight.time.slice(0, 2)}:${flight.time.slice(2)}`;
+      const statusText = this.getStatusText(flight.actionCode);
+
+      // Status cell
+      const statusCell = document.createElement('td');
+      statusCell.innerHTML = `<span class="gcr-action gcr-action-${flight.actionCode.toLowerCase()}">${statusText}</span>`;
+      row.appendChild(statusCell);
+
+      // Identifier cell (if showing)
+      if (showIdentifier) {
+        const idCell = document.createElement('td');
+        idCell.textContent = flight.identifier;
+        idCell.style.fontWeight = '600';
+        row.appendChild(idCell);
       }
 
-      this.outputDiv.appendChild(footnotesDiv);
+      // Date cell
+      const dateCell = document.createElement('td');
+      dateCell.textContent = flight.date;
+      row.appendChild(dateCell);
+
+      // Time cell
+      const timeCell = document.createElement('td');
+      timeCell.textContent = timeFormatted;
+      row.appendChild(timeCell);
+
+      // Direction cell
+      const dirCell = document.createElement('td');
+      dirCell.innerHTML = `<span class="gcr-direction gcr-${direction.toLowerCase()}">${flight.isArrival ? 'Arr' : 'Dep'}</span>`;
+      row.appendChild(dirCell);
+
+      // From/To cell
+      const airportCell = document.createElement('td');
+      airportCell.textContent = flight.otherAirport;
+      row.appendChild(airportCell);
+
+      // Aircraft cell (if showing)
+      if (showAircraft) {
+        const acCell = document.createElement('td');
+        acCell.textContent = `${flight.aircraftType} (${flight.seatCount})`;
+        row.appendChild(acCell);
+      }
+
+      // Slot ID cell
+      const slotCell = document.createElement('td');
+      if (flight.slotId) {
+        const slotWrapper = document.createElement('span');
+        slotWrapper.className = 'gcr-slot-id-wrapper';
+
+        const slotSpan = document.createElement('span');
+        slotSpan.className = 'gcr-slot-id';
+        slotSpan.textContent = flight.slotId;
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'gcr-copy-btn';
+        copyBtn.title = 'Copy to clipboard';
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+        copyBtn.addEventListener('click', () => this.copyToClipboard(flight.slotId!));
+
+        slotWrapper.appendChild(slotSpan);
+        slotWrapper.appendChild(copyBtn);
+        slotCell.appendChild(slotWrapper);
+      } else {
+        slotCell.innerHTML = `<span class="gcr-no-slot">—</span>`;
+      }
+      row.appendChild(slotCell);
+
+      tbody.appendChild(row);
     }
-  }
+    table.appendChild(tbody);
 
-  private renderReplyFlight(flight: GcrFlightLine, identifierType: string): HTMLElement {
-    const flightDiv = document.createElement('div');
-    const statusClass = this.getStatusClass(flight.actionCode);
-    flightDiv.className = `gcr-flight gcr-reply-flight gcr-reply-${statusClass}`;
-
-    const statusInfo = REPLY_STATUS_INFO[flight.actionCode];
-    const statusText = statusInfo?.description || ACTION_CODE_DESCRIPTIONS[flight.actionCode] || flight.actionCode;
-    const flightTypeDesc = FLIGHT_TYPE_DESCRIPTIONS[flight.flightType] || flight.flightType;
-    const direction = flight.isArrival ? 'Arrival' : 'Departure';
-
-    flightDiv.innerHTML = `
-      <div class="gcr-reply-header">
-        <div class="gcr-reply-status gcr-status-${statusClass}">
-          <span class="gcr-action gcr-action-${flight.actionCode.toLowerCase()}">${flight.actionCode}</span>
-          <span class="gcr-status-text">${statusText}</span>
-        </div>
-        ${flight.slotId
-          ? `<div class="gcr-reply-slot-id"><span class="gcr-label">Slot ID:</span> <span class="gcr-slot-id-value">${flight.slotId}</span></div>`
-          : '<div class="gcr-reply-no-slot">No Slot ID assigned</div>'}
-      </div>
-      <div class="gcr-reply-flight-info">
-        <div class="gcr-field"><span class="gcr-label">${identifierType === 'FLT' ? 'Flight' : 'Registration'}:</span> <span class="gcr-value">${flight.identifier}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Date:</span> <span class="gcr-value">${flight.date}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Time (UTC):</span> <span class="gcr-value">${flight.time.slice(0, 2)}:${flight.time.slice(2)}</span></div>
-        <div class="gcr-field"><span class="gcr-label">${flight.isArrival ? 'From' : 'To'}:</span> <span class="gcr-value">${flight.otherAirport}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Direction:</span> <span class="gcr-direction gcr-${direction.toLowerCase()}">${direction}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Aircraft:</span> <span class="gcr-value">${flight.aircraftType} (${flight.seatCount} seats)</span></div>
-        <div class="gcr-field"><span class="gcr-label">Flight Type:</span> <span class="gcr-value">${flightTypeDesc}</span></div>
-      </div>
-    `;
-
-    return flightDiv;
-  }
-
-  private getStatusClass(actionCode: ActionCode): string {
-    const mapping: Record<ActionCode, string> = {
-      K: 'confirmed',
-      X: 'cancelled',
-      H: 'held',
-      U: 'refused',
-      W: 'error',
-      N: 'new',
-      D: 'delete',
-      C: 'change',
-      R: 'revised'
-    };
-    return mapping[actionCode] || 'default';
-  }
-
-  private renderFlight(flight: GcrFlightLine, identifierType: string): HTMLElement {
-    const flightDiv = document.createElement('div');
-    flightDiv.className = 'gcr-flight';
-
-    const actionDesc = ACTION_CODE_DESCRIPTIONS[flight.actionCode] || flight.actionCode;
-    const flightTypeDesc = FLIGHT_TYPE_DESCRIPTIONS[flight.flightType] || flight.flightType;
-    const direction = flight.isArrival ? 'Arrival' : 'Departure';
-
-    flightDiv.innerHTML = `
-      <div class="gcr-flight-header">
-        <span class="gcr-action gcr-action-${flight.actionCode.toLowerCase()}">${flight.actionCode}</span>
-        <span class="gcr-identifier">${flight.identifier}</span>
-        <span class="gcr-direction gcr-${direction.toLowerCase()}">${direction}</span>
-      </div>
-      <div class="gcr-flight-details">
-        <div class="gcr-field"><span class="gcr-label">Action:</span> <span class="gcr-value">${actionDesc}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Date:</span> <span class="gcr-value">${flight.date}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Time (UTC):</span> <span class="gcr-value">${flight.time.slice(0, 2)}:${flight.time.slice(2)}</span></div>
-        <div class="gcr-field"><span class="gcr-label">${flight.isArrival ? 'From' : 'To'}:</span> <span class="gcr-value">${flight.otherAirport}</span></div>
-        <div class="gcr-field"><span class="gcr-label">Aircraft:</span> <span class="gcr-value">${flight.aircraftType} (${flight.seatCount} seats)</span></div>
-        <div class="gcr-field"><span class="gcr-label">Flight Type:</span> <span class="gcr-value">${flightTypeDesc}</span></div>
-        ${flight.slotId ? `<div class="gcr-field"><span class="gcr-label">Slot ID:</span> <span class="gcr-value gcr-slot-id">${flight.slotId}</span></div>` : ''}
-      </div>
-    `;
-
-    return flightDiv;
+    return table;
   }
 }

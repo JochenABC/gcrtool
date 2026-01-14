@@ -6,7 +6,7 @@
   font-size: 14px;
   line-height: 1.5;
   color: #333;
-  max-width: 800px;
+  width: 100%;
 }
 
 /* Sections */
@@ -64,6 +64,7 @@
   width: 100%;
   box-sizing: border-box;
   font-family: monospace;
+  font-size: 13px;
   resize: vertical;
 }
 
@@ -405,4 +406,233 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
+}
+
+/* Parse Reply - Responsive Container */
+.gcr-parse-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.gcr-parse-container .gcr-input-section {
+  flex: 1 1 auto;
+  min-width: 280px;
+  max-width: 60ch;
+  margin-bottom: 0;
+}
+
+.gcr-parse-container .gcr-output {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+/* Combined Header Section */
+.gcr-header-section {
+  padding: 0;
+  margin-bottom: 20px;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.gcr-header-section .gcr-header-line:first-child {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: none;
+}
+
+.gcr-header-section .gcr-header-line:first-child .gcr-header-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.gcr-header-section .gcr-header-line:first-child .gcr-header-value {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.gcr-header-line {
+  padding: 10px 20px;
+  margin: 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gcr-header-line:last-child {
+  border-bottom: none;
+}
+
+.gcr-header-label {
+  font-weight: 500;
+  color: #888;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.gcr-header-value {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+/* Reply section styling */
+.gcr-reply-section .gcr-header-line:first-child {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+/* Mixed section styling */
+.gcr-mixed-section .gcr-header-line:first-child {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Results Table */
+.gcr-results-table-wrapper {
+  margin-bottom: 15px;
+}
+
+.gcr-results-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gcr-results-table th {
+  background: #f5f5f5;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+  white-space: nowrap;
+}
+
+.gcr-results-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.gcr-results-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.gcr-results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gcr-results-table .gcr-action {
+  display: inline-block;
+  padding: 2px 8px;
+  font-weight: bold;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.gcr-results-table .gcr-direction {
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+}
+
+.gcr-slot-id-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gcr-results-table .gcr-slot-id {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.gcr-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.gcr-copy-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+  color: #333;
+}
+
+.gcr-copy-btn:active {
+  background: #e0e0e0;
+}
+
+.gcr-results-table .gcr-no-slot {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Footnote Sections */
+.gcr-footnote-section {
+  margin-top: 15px;
+}
+
+.gcr-footnote-group {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gcr-footnote-group:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.gcr-footnote-group h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.gcr-footnote-desc {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.gcr-footnote-text {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
+
+.gcr-footnote-text:last-child {
+  margin-bottom: 0;
 }
