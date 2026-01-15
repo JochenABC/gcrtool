@@ -361,7 +361,8 @@ export class EncoderUI {
         airport: this.coordinationAirport,
         flights: flightLines
       }],
-      footnotes: []
+      footnotes: [],
+      messageType: 'request'
     };
 
     if (this.siText) {
