@@ -26,6 +26,8 @@ export class EncoderUI {
   private errorsDiv: HTMLElement;
   private formContainer: HTMLElement;
 
+  private static STORAGE_KEY = 'gcr-encoder-preferences';
+
   constructor(selector: string) {
     const el = document.querySelector(selector);
     if (!el) throw new Error(`Element not found: ${selector}`);
@@ -34,8 +36,40 @@ export class EncoderUI {
     this.outputTextarea = document.createElement('textarea');
     this.errorsDiv = document.createElement('div');
     this.formContainer = document.createElement('div');
+    this.loadPreferences();
     this.addFlight();
     this.render();
+  }
+
+  private loadPreferences(): void {
+    try {
+      const stored = localStorage.getItem(EncoderUI.STORAGE_KEY);
+      if (stored) {
+        const prefs = JSON.parse(stored);
+        if (prefs.identifierType) this.identifierType = prefs.identifierType;
+        if (prefs.identifier) this.identifier = prefs.identifier;
+        if (prefs.aircraftType) this.aircraftType = prefs.aircraftType;
+        if (prefs.seatCount) this.seatCount = prefs.seatCount;
+        if (prefs.flightType) this.flightType = prefs.flightType;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  private savePreferences(): void {
+    try {
+      const prefs = {
+        identifierType: this.identifierType,
+        identifier: this.identifier,
+        aircraftType: this.aircraftType,
+        seatCount: this.seatCount,
+        flightType: this.flightType
+      };
+      localStorage.setItem(EncoderUI.STORAGE_KEY, JSON.stringify(prefs));
+    } catch {
+      // Ignore localStorage errors
+    }
   }
 
   private render(): void {
@@ -48,6 +82,10 @@ export class EncoderUI {
     headerSection.innerHTML = `
       <h3>Request Details</h3>
       <div class="gcr-form-flex">
+        <label>
+          Coord. Airport:
+          <input type="text" id="gcr-coord-airport" class="gcr-input gcr-input-xs" maxlength="4" placeholder="EDDF" value="${this.coordinationAirport}" />
+        </label>
         <label>
           Identifier Type:
           <select id="gcr-id-type" class="gcr-select gcr-select-md">
@@ -73,37 +111,38 @@ export class EncoderUI {
             ${(['D', 'I', 'N'] as FlightType[]).map(type => `<option value="${type}" ${this.flightType === type ? 'selected' : ''}>${type} - ${FLIGHT_TYPE_DESCRIPTIONS[type]}</option>`).join('')}
           </select>
         </label>
-        <label>
-          Coord. Airport:
-          <input type="text" id="gcr-coord-airport" class="gcr-input gcr-input-xs" maxlength="4" placeholder="EDDF" value="${this.coordinationAirport}" />
-        </label>
       </div>
     `;
 
     headerSection.querySelector('#gcr-id-type')?.addEventListener('change', (e) => {
       this.identifierType = (e.target as HTMLSelectElement).value as IdentifierType;
+      this.savePreferences();
       this.render();
     });
 
     headerSection.querySelector('#gcr-identifier')?.addEventListener('input', (e) => {
       this.identifier = (e.target as HTMLInputElement).value.toUpperCase();
       (e.target as HTMLInputElement).value = this.identifier;
+      this.savePreferences();
       this.generate();
     });
 
     headerSection.querySelector('#gcr-aircraft-type')?.addEventListener('input', (e) => {
       this.aircraftType = (e.target as HTMLInputElement).value.toUpperCase();
       (e.target as HTMLInputElement).value = this.aircraftType;
+      this.savePreferences();
       this.generate();
     });
 
     headerSection.querySelector('#gcr-seat-count')?.addEventListener('input', (e) => {
       this.seatCount = (e.target as HTMLInputElement).value;
+      this.savePreferences();
       this.generate();
     });
 
     headerSection.querySelector('#gcr-flight-type')?.addEventListener('change', (e) => {
       this.flightType = (e.target as HTMLSelectElement).value as FlightType;
+      this.savePreferences();
       this.generate();
     });
 
@@ -118,54 +157,56 @@ export class EncoderUI {
     // Flights section
     const flightsSection = document.createElement('div');
     flightsSection.className = 'gcr-section';
-
-    const flightsHeader = document.createElement('div');
-    flightsHeader.className = 'gcr-section-header';
-    flightsHeader.innerHTML = '<h3>Flights</h3>';
-
-    const addBtn = document.createElement('button');
-    addBtn.className = 'gcr-btn gcr-btn-add';
-    addBtn.textContent = '+ Add Flight';
-    addBtn.addEventListener('click', () => {
-      this.addFlight();
-      this.renderFlights();
-      this.generate();
-    });
-    flightsHeader.appendChild(addBtn);
-
-    flightsSection.appendChild(flightsHeader);
+    flightsSection.innerHTML = '<h3>Flights</h3>';
 
     this.formContainer.className = 'gcr-flights-container';
     flightsSection.appendChild(this.formContainer);
 
     this.container.appendChild(flightsSection);
 
-    // Footnotes section
+    // Footnotes section (collapsible)
+    const hasFootnotes = this.siText || this.giText;
     const footnotesSection = document.createElement('div');
-    footnotesSection.className = 'gcr-section';
+    footnotesSection.className = `gcr-section gcr-collapsible${hasFootnotes ? ' gcr-expanded' : ''}`;
     footnotesSection.innerHTML = `
-      <h3>Footnotes (Optional)</h3>
-      <div class="gcr-form-row">
-        <label>
-          SI (Special Information):
-          <input type="text" id="gcr-si" class="gcr-input gcr-input-wide" placeholder="IF NOT AVBL PLS CFM NEXT LATER POSS" value="${this.siText}" />
-        </label>
+      <div class="gcr-collapsible-header">
+        <h3>Footnotes (Optional)</h3>
+        <span class="gcr-collapsible-icon"></span>
       </div>
-      <div class="gcr-form-row">
-        <label>
-          GI (General Information):
-          <input type="text" id="gcr-gi" class="gcr-input gcr-input-wide" placeholder="BRGDS" value="${this.giText}" />
-        </label>
+      <div class="gcr-collapsible-content">
+        <div class="gcr-form-row">
+          <label>
+            SI (Special Information):
+            <input type="text" id="gcr-si" class="gcr-input gcr-input-wide" placeholder="IF NOT AVBL PLS CFM NEXT LATER POSS" value="${this.siText}" />
+          </label>
+        </div>
+        <div class="gcr-form-row">
+          <label>
+            GI (General Information):
+            <input type="text" id="gcr-gi" class="gcr-input gcr-input-wide" placeholder="BRGDS" value="${this.giText}" />
+          </label>
+        </div>
       </div>
     `;
 
+    const footnotesHeader = footnotesSection.querySelector('.gcr-collapsible-header')!;
+    footnotesHeader.addEventListener('click', () => {
+      footnotesSection.classList.toggle('gcr-expanded');
+    });
+
     footnotesSection.querySelector('#gcr-si')?.addEventListener('input', (e) => {
       this.siText = (e.target as HTMLInputElement).value;
+      if (this.siText && !footnotesSection.classList.contains('gcr-expanded')) {
+        footnotesSection.classList.add('gcr-expanded');
+      }
       this.generate();
     });
 
     footnotesSection.querySelector('#gcr-gi')?.addEventListener('input', (e) => {
       this.giText = (e.target as HTMLInputElement).value;
+      if (this.giText && !footnotesSection.classList.contains('gcr-expanded')) {
+        footnotesSection.classList.add('gcr-expanded');
+      }
       this.generate();
     });
 
@@ -182,9 +223,6 @@ export class EncoderUI {
 
     this.errorsDiv.className = 'gcr-errors';
 
-    const outputLabel = document.createElement('label');
-    outputLabel.textContent = 'Generated GCR Message:';
-
     this.outputTextarea.className = 'gcr-textarea gcr-output-textarea';
     this.outputTextarea.readOnly = true;
     this.outputTextarea.rows = 10;
@@ -196,7 +234,6 @@ export class EncoderUI {
 
     generateSection.appendChild(generateBtn);
     generateSection.appendChild(this.errorsDiv);
-    generateSection.appendChild(outputLabel);
     generateSection.appendChild(this.outputTextarea);
     generateSection.appendChild(copyBtn);
 
@@ -219,56 +256,67 @@ export class EncoderUI {
   private renderFlights(): void {
     this.formContainer.innerHTML = '';
 
-    this.flights.forEach((flight, index) => {
-      const flightDiv = document.createElement('div');
-      flightDiv.className = 'gcr-flight-form';
+    // Create table structure
+    const table = document.createElement('table');
+    table.className = 'gcr-flights-table';
 
-      const showSlotId = ['D', 'C', 'R'].includes(flight.actionCode);
-      flightDiv.innerHTML = `
-        <div class="gcr-flight-form-header">
-          <span>Flight ${index + 1}</span>
-          ${this.flights.length > 1 ? `<button class="gcr-btn gcr-btn-remove" data-index="${index}">Remove</button>` : ''}
-        </div>
-        <div class="gcr-form-flex">
-          <label>
-            Action Code:
-            <select class="gcr-select gcr-select-lg" data-field="actionCode" data-index="${index}">
-              ${OWNER_ACTION_CODES.map(code => `<option value="${code}" ${flight.actionCode === code ? 'selected' : ''}>${code} - ${ACTION_CODE_DESCRIPTIONS[code]}</option>`).join('')}
-            </select>
-          </label>
-          <label>
-            Date:
-            <input type="text" class="gcr-input gcr-input-sm" data-field="date" data-index="${index}" maxlength="5" placeholder="08JUN" value="${flight.date}" />
-          </label>
-          <label>
-            Direction:
-            <select class="gcr-select gcr-select-sm" data-field="isArrival" data-index="${index}">
-              <option value="true" ${flight.isArrival ? 'selected' : ''}>Arrival</option>
-              <option value="false" ${!flight.isArrival ? 'selected' : ''}>Departure</option>
-            </select>
-          </label>
-          <label>
-            ${flight.isArrival ? 'Origin' : 'Dest.'}:
-            <input type="text" class="gcr-input gcr-input-xs" data-field="otherAirport" data-index="${index}" maxlength="4" placeholder="LSZH" value="${flight.otherAirport}" />
-          </label>
-          <label>
-            Time (UTC):
-            <input type="text" class="gcr-input gcr-input-sm" data-field="time" data-index="${index}" maxlength="4" placeholder="0900" value="${flight.time}" />
-          </label>
-          ${showSlotId ? `<label>
-            Slot ID:
-            <input type="text" class="gcr-input gcr-input-lg" data-field="slotId" data-index="${index}" placeholder="EDDF3010070001" value="${flight.slotId}" />
-          </label>` : ''}
-        </div>
+    // Header row
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>Action</th>
+        <th>Date</th>
+        <th>Dir</th>
+        <th>Airport</th>
+        <th>Time (UTC)</th>
+        <th>Slot ID</th>
+        <th></th>
+      </tr>
+    `;
+    table.appendChild(thead);
+
+    // Body rows
+    const tbody = document.createElement('tbody');
+    this.flights.forEach((flight, index) => {
+      const row = document.createElement('tr');
+      const slotIdDisabled = !['D', 'C', 'R'].includes(flight.actionCode);
+
+      row.innerHTML = `
+        <td>
+          <select class="gcr-table-select" data-field="actionCode" data-index="${index}">
+            ${OWNER_ACTION_CODES.map(code => `<option value="${code}" ${flight.actionCode === code ? 'selected' : ''}>${code} - ${ACTION_CODE_DESCRIPTIONS[code]}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <input type="text" class="gcr-table-input gcr-table-input-date" data-field="date" data-index="${index}" maxlength="5" placeholder="08JUN" value="${flight.date}" />
+        </td>
+        <td>
+          <select class="gcr-table-select gcr-table-select-dir" data-field="isArrival" data-index="${index}">
+            <option value="true" ${flight.isArrival ? 'selected' : ''}>Arrival</option>
+            <option value="false" ${!flight.isArrival ? 'selected' : ''}>Departure</option>
+          </select>
+        </td>
+        <td>
+          <input type="text" class="gcr-table-input gcr-table-input-airport" data-field="otherAirport" data-index="${index}" maxlength="4" placeholder="LSZH" value="${flight.otherAirport}" />
+        </td>
+        <td>
+          <input type="text" class="gcr-table-input gcr-table-input-time" data-field="time" data-index="${index}" maxlength="4" placeholder="0900" value="${flight.time}" />
+        </td>
+        <td>
+          <input type="text" class="gcr-table-input gcr-table-input-slot" data-field="slotId" data-index="${index}" placeholder="${slotIdDisabled ? '—' : 'EDDF3010070001'}" value="${flight.slotId}" ${slotIdDisabled ? 'disabled' : ''} />
+        </td>
+        <td>
+          ${this.flights.length > 1 ? `<button class="gcr-table-remove-btn" data-index="${index}" title="Remove flight">&times;</button>` : ''}
+        </td>
       `;
 
       // Add event listeners
-      flightDiv.querySelectorAll('input, select').forEach(el => {
+      row.querySelectorAll('input, select').forEach(el => {
         el.addEventListener('change', (e) => this.handleFieldChange(e));
         el.addEventListener('input', (e) => this.handleFieldChange(e));
       });
 
-      const removeBtn = flightDiv.querySelector('.gcr-btn-remove');
+      const removeBtn = row.querySelector('.gcr-table-remove-btn');
       if (removeBtn) {
         removeBtn.addEventListener('click', () => {
           this.flights.splice(index, 1);
@@ -277,8 +325,22 @@ export class EncoderUI {
         });
       }
 
-      this.formContainer.appendChild(flightDiv);
+      tbody.appendChild(row);
     });
+    table.appendChild(tbody);
+
+    this.formContainer.appendChild(table);
+
+    // Add flight button below table
+    const addBtn = document.createElement('button');
+    addBtn.className = 'gcr-btn gcr-btn-add gcr-flights-add-btn';
+    addBtn.textContent = '+ Add Flight';
+    addBtn.addEventListener('click', () => {
+      this.addFlight();
+      this.renderFlights();
+      this.generate();
+    });
+    this.formContainer.appendChild(addBtn);
   }
 
   private handleFieldChange(e: Event): void {
@@ -297,6 +359,11 @@ export class EncoderUI {
       }
 
       (this.flights[index] as any)[field] = value;
+
+      // Clear slotId when switching to an action code that doesn't need it
+      if (field === 'actionCode' && !['D', 'C', 'R'].includes(value as string)) {
+        this.flights[index].slotId = '';
+      }
 
       // Re-render if direction or action code changed to update UI
       if (field === 'isArrival' || field === 'actionCode') {

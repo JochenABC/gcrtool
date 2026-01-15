@@ -50,6 +50,12 @@
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
+  box-sizing: border-box;
+}
+
+.gcr-input,
+.gcr-select {
+  height: 36px;
 }
 
 .gcr-input:focus,
@@ -86,18 +92,22 @@
 .gcr-form-flex {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
+  gap: 16px 12px;
+  align-items: flex-start;
 }
 
 .gcr-form-flex label {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
 }
 
 .gcr-form-flex .gcr-input,
 .gcr-form-flex .gcr-select {
+  font-size: 14px;
   box-sizing: border-box;
 }
 
@@ -303,6 +313,193 @@
 
 .gcr-flights-container {
   margin-top: 15px;
+}
+
+/* Flights Entry Table (encoder) */
+.gcr-flights-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gcr-flights-table th {
+  background: #f5f5f5;
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: #555;
+  border-bottom: 2px solid #ddd;
+  white-space: nowrap;
+}
+
+.gcr-flights-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.gcr-flights-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gcr-flights-table tbody tr:hover {
+  background: #fafafa;
+}
+
+/* Table inputs - compact styling */
+.gcr-table-input,
+.gcr-table-select {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+  height: 32px;
+}
+
+.gcr-table-input:focus,
+.gcr-table-select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+.gcr-table-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Specific input widths */
+.gcr-table-select {
+  width: 160px;
+}
+
+.gcr-table-select-dir {
+  width: 90px;
+}
+
+.gcr-table-input-date {
+  width: 70px;
+}
+
+.gcr-table-input-airport {
+  width: 60px;
+}
+
+.gcr-table-input-time {
+  width: 60px;
+}
+
+.gcr-table-input-slot {
+  width: 140px;
+}
+
+/* Remove button in table */
+.gcr-table-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+  color: #999;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.gcr-table-remove-btn:hover {
+  background: #fff0f0;
+  border-color: #cc0000;
+  color: #cc0000;
+}
+
+/* Add flight button below table */
+.gcr-flights-add-btn {
+  margin-top: 12px;
+}
+
+/* Collapsible section */
+.gcr-collapsible .gcr-collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin: -15px -15px 0;
+  padding: 12px 15px;
+  border-radius: 4px;
+}
+
+.gcr-collapsible .gcr-collapsible-header:hover {
+  background: #f0f0f0;
+}
+
+.gcr-collapsible .gcr-collapsible-header h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.gcr-collapsible-icon {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gcr-collapsible-icon::before,
+.gcr-collapsible-icon::after {
+  content: '';
+  position: absolute;
+  background: #666;
+  transition: transform 0.2s ease;
+}
+
+.gcr-collapsible-icon::before {
+  width: 12px;
+  height: 2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gcr-collapsible-icon::after {
+  width: 2px;
+  height: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gcr-collapsible.gcr-expanded .gcr-collapsible-icon::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+  opacity: 0;
+}
+
+.gcr-collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, padding 0.25s ease;
+  padding-top: 0;
+}
+
+.gcr-collapsible.gcr-expanded .gcr-collapsible-content {
+  max-height: 200px;
+  padding-top: 15px;
 }
 
 /* Errors */
