@@ -10,7 +10,7 @@ export const ACTION_CODE_DESCRIPTIONS: Record<ActionCode, string> = {
   C: 'Schedule to be changed',
   R: 'Revised schedule',
   K: 'Confirmation',
-  X: 'Cancellation',
+  X: 'Cancelled',
   H: 'Holding',
   U: 'Refusal',
   W: 'Wrong'

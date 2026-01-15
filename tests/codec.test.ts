@@ -155,7 +155,7 @@ GI BRGDS`;
       expect(result.footnotes[1].text).toBe('BRGDS');
     });
 
-    it('should decode Example 1D - cancellation', () => {
+    it('should decode Example 1D - cancelled', () => {
       const result = codec.decode(EXAMPLE_1D);
 
       expect(isParseError(result)).toBe(false);
