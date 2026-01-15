@@ -40,7 +40,7 @@ export class DecoderUI {
     this.textarea.addEventListener('input', () => this.decode());
 
     const parseBtn = document.createElement('button');
-    parseBtn.className = 'gcr-btn gcr-btn-primary';
+    parseBtn.className = 'gcr-btn-primary';
     parseBtn.textContent = 'Parse';
     parseBtn.addEventListener('click', () => this.decode());
 
@@ -329,7 +329,7 @@ export class DecoderUI {
       if (showIdentifier) {
         const idCell = document.createElement('td');
         idCell.textContent = flight.identifier;
-        idCell.style.fontWeight = '600';
+        idCell.className = 'gcr-identifier';
         row.appendChild(idCell);
       }
 
@@ -371,7 +371,7 @@ export class DecoderUI {
         slotSpan.textContent = flight.slotId;
 
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'gcr-copy-btn';
+        copyBtn.className = 'gcr-copy-btn gcr-copy-btn-sm';
         copyBtn.title = 'Copy to clipboard';
         copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
         copyBtn.addEventListener('click', () => this.copyToClipboard(flight.slotId!));

@@ -77,10 +77,10 @@ export class EncoderUI {
     this.container.classList.add('gcr-encoder');
 
     // Header section
-    const headerSection = document.createElement('div');
+    const headerSection = document.createElement('article');
     headerSection.className = 'gcr-section';
     headerSection.innerHTML = `
-      <h3>Request Details</h3>
+      <header><h3>Request Details</h3></header>
       <div class="gcr-form-flex">
         <label>
           Coord. Airport:
@@ -118,6 +118,7 @@ export class EncoderUI {
       this.identifierType = (e.target as HTMLSelectElement).value as IdentifierType;
       this.savePreferences();
       this.render();
+      this.generate();
     });
 
     headerSection.querySelector('#gcr-identifier')?.addEventListener('input', (e) => {
@@ -155,24 +156,22 @@ export class EncoderUI {
     this.container.appendChild(headerSection);
 
     // Flights section
-    const flightsSection = document.createElement('div');
+    const flightsSection = document.createElement('article');
     flightsSection.className = 'gcr-section';
-    flightsSection.innerHTML = '<h3>Flights</h3>';
+    flightsSection.innerHTML = '<header><h3>Flights</h3></header>';
 
     this.formContainer.className = 'gcr-flights-container';
     flightsSection.appendChild(this.formContainer);
 
     this.container.appendChild(flightsSection);
 
-    // Footnotes section (collapsible)
+    // Footnotes section (collapsible using native details)
     const hasFootnotes = this.siText || this.giText;
-    const footnotesSection = document.createElement('div');
-    footnotesSection.className = `gcr-section gcr-collapsible${hasFootnotes ? ' gcr-expanded' : ''}`;
+    const footnotesSection = document.createElement('details');
+    footnotesSection.className = 'gcr-collapsible';
+    if (hasFootnotes) footnotesSection.open = true;
     footnotesSection.innerHTML = `
-      <div class="gcr-collapsible-header">
-        <h3>Footnotes (Optional)</h3>
-        <span class="gcr-collapsible-icon"></span>
-      </div>
+      <summary>Footnotes (Optional)</summary>
       <div class="gcr-collapsible-content">
         <div class="gcr-form-row">
           <label>
@@ -189,23 +188,18 @@ export class EncoderUI {
       </div>
     `;
 
-    const footnotesHeader = footnotesSection.querySelector('.gcr-collapsible-header')!;
-    footnotesHeader.addEventListener('click', () => {
-      footnotesSection.classList.toggle('gcr-expanded');
-    });
-
     footnotesSection.querySelector('#gcr-si')?.addEventListener('input', (e) => {
       this.siText = (e.target as HTMLInputElement).value;
-      if (this.siText && !footnotesSection.classList.contains('gcr-expanded')) {
-        footnotesSection.classList.add('gcr-expanded');
+      if (this.siText && !footnotesSection.open) {
+        footnotesSection.open = true;
       }
       this.generate();
     });
 
     footnotesSection.querySelector('#gcr-gi')?.addEventListener('input', (e) => {
       this.giText = (e.target as HTMLInputElement).value;
-      if (this.giText && !footnotesSection.classList.contains('gcr-expanded')) {
-        footnotesSection.classList.add('gcr-expanded');
+      if (this.giText && !footnotesSection.open) {
+        footnotesSection.open = true;
       }
       this.generate();
     });
@@ -213,11 +207,11 @@ export class EncoderUI {
     this.container.appendChild(footnotesSection);
 
     // Generate section
-    const generateSection = document.createElement('div');
+    const generateSection = document.createElement('article');
     generateSection.className = 'gcr-section';
 
     const generateBtn = document.createElement('button');
-    generateBtn.className = 'gcr-btn gcr-btn-primary';
+    generateBtn.className = 'gcr-btn-primary';
     generateBtn.textContent = 'Generate GCR';
     generateBtn.addEventListener('click', () => this.generate());
 
@@ -228,7 +222,7 @@ export class EncoderUI {
     this.outputTextarea.rows = 10;
 
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'gcr-btn';
+    copyBtn.className = 'gcr-btn-secondary';
     copyBtn.textContent = 'Copy to Clipboard';
     copyBtn.addEventListener('click', () => this.copyToClipboard());
 
@@ -306,7 +300,7 @@ export class EncoderUI {
           <input type="text" class="gcr-table-input gcr-table-input-slot" data-field="slotId" data-index="${index}" placeholder="${slotIdDisabled ? '—' : 'EDDF3010070001'}" value="${flight.slotId}" ${slotIdDisabled ? 'disabled' : ''} />
         </td>
         <td>
-          ${this.flights.length > 1 ? `<button class="gcr-table-remove-btn" data-index="${index}" title="Remove flight">&times;</button>` : ''}
+          ${this.flights.length > 1 ? `<button class="gcr-btn-remove" data-index="${index}" title="Remove flight">&times;</button>` : ''}
         </td>
       `;
 
@@ -316,7 +310,7 @@ export class EncoderUI {
         el.addEventListener('input', (e) => this.handleFieldChange(e));
       });
 
-      const removeBtn = row.querySelector('.gcr-table-remove-btn');
+      const removeBtn = row.querySelector('.gcr-btn-remove');
       if (removeBtn) {
         removeBtn.addEventListener('click', () => {
           this.flights.splice(index, 1);
@@ -333,7 +327,7 @@ export class EncoderUI {
 
     // Add flight button below table
     const addBtn = document.createElement('button');
-    addBtn.className = 'gcr-btn gcr-btn-add gcr-flights-add-btn';
+    addBtn.className = 'gcr-btn-add gcr-flights-add-btn';
     addBtn.textContent = '+ Add Flight';
     addBtn.addEventListener('click', () => {
       this.addFlight();

@@ -4,66 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GCR Tool - General Aviation Clearance Request Encoder/Decoder</title>
-  <style>
-    /* Tab and panel styling - app-specific */
-    .container {
-      max-width: 100%;
-      padding: 0 1rem;
-    }
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-    .subtitle {
-      color: var(--pico-muted-color);
-      margin-bottom: 1.5rem;
-    }
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .tabs [role="group"] {
-      margin-bottom: 0;
-    }
-    .tabs > .tab {
-      padding: 0.625rem 1.25rem;
-      min-height: 44px; /* Touch-friendly */
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-    /* Inactive tab styling */
-    .tabs > button.tab:not(.active) {
-      background: #f5f5f5 !important;
-      border-color: #ddd !important;
-      color: #666 !important;
-    }
-    .tabs > button.tab:not(.active):hover {
-      background: #e8e8e8 !important;
-      border-color: #ccc !important;
-      color: #333 !important;
-    }
-    /* Higher specificity to override Pico button styles - Active tab */
-    .tabs > button.tab.active,
-    .tabs > button.tab.active:hover {
-      background: var(--pico-primary) !important;
-      border-color: var(--pico-primary) !important;
-      color: #fff !important;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
-    }
-    .panel {
-      display: none;
-      background: var(--pico-card-background-color);
-      padding: 1.25rem;
-      border-radius: var(--pico-border-radius);
-      box-shadow: var(--pico-card-box-shadow);
-    }
-    .panel.active {
-      display: block;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
