@@ -1,8 +1,38 @@
-/* GCR Tool - Minimal Functional CSS */
+/* GCR Tool - Pico CSS + Custom Styling */
+@import "@picocss/pico";
 
+/* Pico overrides for compact app styling */
+:root {
+  --pico-font-size: 14px;
+  --pico-line-height: 1.5;
+  --pico-border-radius: 4px;
+  --pico-spacing: 1rem;
+  --pico-form-element-spacing-vertical: 0.5rem;
+  --pico-form-element-spacing-horizontal: 0.625rem;
+  --pico-primary: #0066cc;
+  --pico-primary-hover: #0052a3;
+  /* Make placeholder text clearly lighter than entered values */
+  --pico-form-element-placeholder-color: #bbb;
+}
+
+/* Explicit placeholder styling for better contrast */
+::placeholder {
+  color: #bbb !important;
+  opacity: 1 !important;
+  font-style: italic;
+}
+
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #bbb !important;
+  opacity: 1 !important;
+  font-style: italic;
+}
+
+/* Scoped container styles */
 .gcr-decoder,
 .gcr-encoder {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: #333;
@@ -41,29 +71,20 @@
   border: none;
 }
 
-/* Form elements */
+/* Form elements - compact overrides for Pico */
 .gcr-input,
 .gcr-select,
 .gcr-textarea {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: inherit;
-  box-sizing: border-box;
+  --pico-form-element-spacing-vertical: 0.5rem;
+  --pico-form-element-spacing-horizontal: 0.625rem;
+  margin-bottom: 0;
+  height: auto;
+  min-height: 36px;
 }
 
 .gcr-input,
 .gcr-select {
   height: 36px;
-}
-
-.gcr-input:focus,
-.gcr-select:focus,
-.gcr-textarea:focus {
-  outline: none;
-  border-color: #0066cc;
-  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
 .gcr-textarea {
@@ -79,14 +100,14 @@
   box-sizing: border-box;
 }
 
-/* Sized inputs for encoder */
-.gcr-input-xs { width: 60px; }   /* 3-4 chars: ICAO codes, seats */
-.gcr-input-sm { width: 80px; }   /* 5-6 chars: date, time */
-.gcr-input-md { width: 120px; }  /* 7-10 chars: registration, flight number */
-.gcr-input-lg { width: 180px; }  /* slot ID */
-.gcr-select-sm { width: 100px; } /* short dropdowns */
-.gcr-select-md { width: 150px; } /* medium dropdowns */
-.gcr-select-lg { width: 220px; } /* dropdowns with descriptions */
+/* Sized inputs for encoder - override Pico's width: 100% */
+.gcr-input-xs { width: 70px !important; }   /* 3-4 chars: ICAO codes, seats */
+.gcr-input-sm { width: 90px !important; }   /* 5-6 chars: date, time */
+.gcr-input-md { width: 130px !important; }  /* 7-10 chars: registration, flight number */
+.gcr-input-lg { width: 190px !important; }  /* slot ID */
+.gcr-select-sm { width: 120px !important; } /* short dropdowns */
+.gcr-select-md { width: 180px !important; } /* medium dropdowns */
+.gcr-select-lg { width: 260px !important; } /* dropdowns with descriptions */
 
 /* Flex form layout for encoder */
 .gcr-form-flex {
@@ -111,20 +132,22 @@
   box-sizing: border-box;
 }
 
-/* Buttons */
+/* Buttons - override Pico defaults */
 .gcr-btn {
   padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: #fff !important;
+  border: 1px solid #ccc !important;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  color: #333 !important;
   transition: background 0.2s, border-color 0.2s;
 }
 
 .gcr-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
+  background: #f0f0f0 !important;
+  border-color: #999 !important;
+  color: #333 !important;
 }
 
 .gcr-btn-primary {
@@ -335,11 +358,19 @@
   color: #555;
   border-bottom: 2px solid #ddd;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 .gcr-flights-table td {
   padding: 8px 6px;
   border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+/* Ensure table form elements don't have Pico's bottom margin */
+.gcr-flights-table input,
+.gcr-flights-table select {
+  margin-bottom: 0 !important;
   vertical-align: middle;
 }
 
@@ -351,7 +382,7 @@
   background: #fafafa;
 }
 
-/* Table inputs - compact styling */
+/* Table inputs - compact styling, override Pico defaults */
 .gcr-table-input,
 .gcr-table-select {
   padding: 6px 8px;
@@ -362,6 +393,7 @@
   background: #fff;
   box-sizing: border-box;
   height: 32px;
+  margin-bottom: 0;
 }
 
 .gcr-table-input:focus,
@@ -377,29 +409,29 @@
   cursor: not-allowed;
 }
 
-/* Specific input widths */
+/* Specific input widths - override Pico */
 .gcr-table-select {
-  width: 160px;
+  width: 180px !important;
 }
 
 .gcr-table-select-dir {
-  width: 90px;
+  width: 110px !important;
 }
 
 .gcr-table-input-date {
-  width: 70px;
+  width: 80px !important;
 }
 
 .gcr-table-input-airport {
-  width: 60px;
+  width: 70px !important;
 }
 
 .gcr-table-input-time {
-  width: 60px;
+  width: 70px !important;
 }
 
 .gcr-table-input-slot {
-  width: 140px;
+  width: 150px !important;
 }
 
 /* Remove button in table */
@@ -860,4 +892,80 @@
 
 .gcr-footnote-text:last-child {
   margin-bottom: 0;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  /* Touch-friendly buttons */
+  .gcr-btn,
+  .gcr-btn-add,
+  .gcr-btn-primary {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  /* Table horizontal scroll */
+  .gcr-flights-table,
+  .gcr-results-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Stack parse container on mobile */
+  .gcr-parse-container {
+    flex-direction: column;
+  }
+
+  .gcr-parse-container .gcr-input-section {
+    max-width: 100%;
+  }
+
+  /* Adjust grid for narrow screens */
+  .gcr-flight-details,
+  .gcr-reply-flight-info {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  /* Larger touch targets for table remove buttons */
+  .gcr-table-remove-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Single column on very small screens */
+  .gcr-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gcr-flight-details,
+  .gcr-reply-flight-info {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full width inputs */
+  .gcr-input-xs,
+  .gcr-input-sm,
+  .gcr-input-md,
+  .gcr-input-lg,
+  .gcr-select-sm,
+  .gcr-select-md,
+  .gcr-select-lg {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Reduce padding in sections */
+  .gcr-section {
+    padding: 12px;
+  }
+
+  /* Header adjustments */
+  .gcr-header-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
