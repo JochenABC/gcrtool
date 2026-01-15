@@ -73,6 +73,34 @@
   box-sizing: border-box;
 }
 
+/* Sized inputs for encoder */
+.gcr-input-xs { width: 60px; }   /* 3-4 chars: ICAO codes, seats */
+.gcr-input-sm { width: 80px; }   /* 5-6 chars: date, time */
+.gcr-input-md { width: 120px; }  /* 7-10 chars: registration, flight number */
+.gcr-input-lg { width: 180px; }  /* slot ID */
+.gcr-select-sm { width: 100px; } /* short dropdowns */
+.gcr-select-md { width: 150px; } /* medium dropdowns */
+.gcr-select-lg { width: 220px; } /* dropdowns with descriptions */
+
+/* Flex form layout for encoder */
+.gcr-form-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.gcr-form-flex label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gcr-form-flex .gcr-input,
+.gcr-form-flex .gcr-select {
+  box-sizing: border-box;
+}
+
 /* Buttons */
 .gcr-btn {
   padding: 8px 16px;

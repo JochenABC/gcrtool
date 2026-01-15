@@ -1,24 +1,24 @@
-import { GcrCodec, GcrMessage, GcrFlightLine, ActionCode, IdentifierType, FlightType, GcrAirportSection } from '../codec';
-import { OWNER_ACTION_CODES, COORDINATOR_ACTION_CODES, ACTION_CODE_DESCRIPTIONS, FLIGHT_TYPE_DESCRIPTIONS, MONTHS } from '../codec/constants';
+import { GcrCodec, GcrMessage, GcrFlightLine, ActionCode, IdentifierType, FlightType } from '../codec';
+import { OWNER_ACTION_CODES, ACTION_CODE_DESCRIPTIONS, FLIGHT_TYPE_DESCRIPTIONS, MONTHS } from '../codec/constants';
 
 interface FlightFormData {
   actionCode: ActionCode;
-  identifier: string;
   date: string;
-  seatCount: string;
-  aircraftType: string;
   isArrival: boolean;
   otherAirport: string;
   time: string;
-  flightType: FlightType;
   slotId: string;
 }
 
 export class EncoderUI {
   private container: HTMLElement;
   private codec: GcrCodec;
-  private identifierType: IdentifierType = 'FLT';
+  private identifierType: IdentifierType = 'REG';
   private coordinationAirport: string = '';
+  private identifier: string = '';
+  private aircraftType: string = '';
+  private seatCount: string = '';
+  private flightType: FlightType = 'D';
   private flights: FlightFormData[] = [];
   private siText: string = '';
   private giText: string = '';
@@ -46,31 +46,71 @@ export class EncoderUI {
     const headerSection = document.createElement('div');
     headerSection.className = 'gcr-section';
     headerSection.innerHTML = `
-      <h3>Header</h3>
-      <div class="gcr-form-row">
+      <h3>Request Details</h3>
+      <div class="gcr-form-flex">
         <label>
           Identifier Type:
-          <select id="gcr-id-type" class="gcr-select">
-            <option value="FLT" ${this.identifierType === 'FLT' ? 'selected' : ''}>Flight Number (FLT)</option>
+          <select id="gcr-id-type" class="gcr-select gcr-select-md">
             <option value="REG" ${this.identifierType === 'REG' ? 'selected' : ''}>Registration (REG)</option>
+            <option value="FLT" ${this.identifierType === 'FLT' ? 'selected' : ''}>Flight Number (FLT)</option>
           </select>
         </label>
-      </div>
-      <div class="gcr-form-row">
         <label>
-          Coordination Airport (ICAO):
-          <input type="text" id="gcr-coord-airport" class="gcr-input" maxlength="4" placeholder="EDDF" value="${this.coordinationAirport}" />
+          ${this.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}:
+          <input type="text" id="gcr-identifier" class="gcr-input gcr-input-md" placeholder="${this.identifierType === 'FLT' ? 'ABC123' : 'HBIEV'}" value="${this.identifier}" />
+        </label>
+        <label>
+          Aircraft Type:
+          <input type="text" id="gcr-aircraft-type" class="gcr-input gcr-input-xs" maxlength="4" placeholder="G159" value="${this.aircraftType}" />
+        </label>
+        <label>
+          Seats:
+          <input type="number" id="gcr-seat-count" class="gcr-input gcr-input-xs" min="0" max="999" placeholder="10" value="${this.seatCount}" />
+        </label>
+        <label>
+          Flight Type:
+          <select id="gcr-flight-type" class="gcr-select gcr-select-lg">
+            ${(['D', 'I', 'N'] as FlightType[]).map(type => `<option value="${type}" ${this.flightType === type ? 'selected' : ''}>${type} - ${FLIGHT_TYPE_DESCRIPTIONS[type]}</option>`).join('')}
+          </select>
+        </label>
+        <label>
+          Coord. Airport:
+          <input type="text" id="gcr-coord-airport" class="gcr-input gcr-input-xs" maxlength="4" placeholder="EDDF" value="${this.coordinationAirport}" />
         </label>
       </div>
     `;
 
     headerSection.querySelector('#gcr-id-type')?.addEventListener('change', (e) => {
       this.identifierType = (e.target as HTMLSelectElement).value as IdentifierType;
+      this.render();
+    });
+
+    headerSection.querySelector('#gcr-identifier')?.addEventListener('input', (e) => {
+      this.identifier = (e.target as HTMLInputElement).value.toUpperCase();
+      (e.target as HTMLInputElement).value = this.identifier;
+      this.generate();
+    });
+
+    headerSection.querySelector('#gcr-aircraft-type')?.addEventListener('input', (e) => {
+      this.aircraftType = (e.target as HTMLInputElement).value.toUpperCase();
+      (e.target as HTMLInputElement).value = this.aircraftType;
+      this.generate();
+    });
+
+    headerSection.querySelector('#gcr-seat-count')?.addEventListener('input', (e) => {
+      this.seatCount = (e.target as HTMLInputElement).value;
+      this.generate();
+    });
+
+    headerSection.querySelector('#gcr-flight-type')?.addEventListener('change', (e) => {
+      this.flightType = (e.target as HTMLSelectElement).value as FlightType;
+      this.generate();
     });
 
     headerSection.querySelector('#gcr-coord-airport')?.addEventListener('input', (e) => {
       this.coordinationAirport = (e.target as HTMLInputElement).value.toUpperCase();
       (e.target as HTMLInputElement).value = this.coordinationAirport;
+      this.generate();
     });
 
     this.container.appendChild(headerSection);
@@ -89,6 +129,7 @@ export class EncoderUI {
     addBtn.addEventListener('click', () => {
       this.addFlight();
       this.renderFlights();
+      this.generate();
     });
     flightsHeader.appendChild(addBtn);
 
@@ -120,10 +161,12 @@ export class EncoderUI {
 
     footnotesSection.querySelector('#gcr-si')?.addEventListener('input', (e) => {
       this.siText = (e.target as HTMLInputElement).value;
+      this.generate();
     });
 
     footnotesSection.querySelector('#gcr-gi')?.addEventListener('input', (e) => {
       this.giText = (e.target as HTMLInputElement).value;
+      this.generate();
     });
 
     this.container.appendChild(footnotesSection);
@@ -165,14 +208,10 @@ export class EncoderUI {
   private addFlight(): void {
     this.flights.push({
       actionCode: 'N',
-      identifier: '',
       date: '',
-      seatCount: '',
-      aircraftType: '',
       isArrival: true,
       otherAirport: '',
       time: '',
-      flightType: 'D',
       slotId: ''
     });
   }
@@ -184,64 +223,42 @@ export class EncoderUI {
       const flightDiv = document.createElement('div');
       flightDiv.className = 'gcr-flight-form';
 
+      const showSlotId = ['D', 'C', 'R'].includes(flight.actionCode);
       flightDiv.innerHTML = `
         <div class="gcr-flight-form-header">
           <span>Flight ${index + 1}</span>
           ${this.flights.length > 1 ? `<button class="gcr-btn gcr-btn-remove" data-index="${index}">Remove</button>` : ''}
         </div>
-        <div class="gcr-form-grid">
+        <div class="gcr-form-flex">
           <label>
             Action Code:
-            <select class="gcr-select" data-field="actionCode" data-index="${index}">
-              <optgroup label="Owner/Operator">
-                ${OWNER_ACTION_CODES.map(code => `<option value="${code}" ${flight.actionCode === code ? 'selected' : ''}>${code} - ${ACTION_CODE_DESCRIPTIONS[code]}</option>`).join('')}
-              </optgroup>
-              <optgroup label="Coordinator">
-                ${COORDINATOR_ACTION_CODES.map(code => `<option value="${code}" ${flight.actionCode === code ? 'selected' : ''}>${code} - ${ACTION_CODE_DESCRIPTIONS[code]}</option>`).join('')}
-              </optgroup>
+            <select class="gcr-select gcr-select-lg" data-field="actionCode" data-index="${index}">
+              ${OWNER_ACTION_CODES.map(code => `<option value="${code}" ${flight.actionCode === code ? 'selected' : ''}>${code} - ${ACTION_CODE_DESCRIPTIONS[code]}</option>`).join('')}
             </select>
           </label>
           <label>
-            ${this.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}:
-            <input type="text" class="gcr-input" data-field="identifier" data-index="${index}" placeholder="${this.identifierType === 'FLT' ? 'ABC123' : 'HBIEV'}" value="${flight.identifier}" />
-          </label>
-          <label>
-            Date (DDMMM):
-            <input type="text" class="gcr-input" data-field="date" data-index="${index}" maxlength="5" placeholder="08JUN" value="${flight.date}" />
+            Date:
+            <input type="text" class="gcr-input gcr-input-sm" data-field="date" data-index="${index}" maxlength="5" placeholder="08JUN" value="${flight.date}" />
           </label>
           <label>
             Direction:
-            <select class="gcr-select" data-field="isArrival" data-index="${index}">
+            <select class="gcr-select gcr-select-sm" data-field="isArrival" data-index="${index}">
               <option value="true" ${flight.isArrival ? 'selected' : ''}>Arrival</option>
               <option value="false" ${!flight.isArrival ? 'selected' : ''}>Departure</option>
             </select>
           </label>
           <label>
-            ${flight.isArrival ? 'Origin' : 'Destination'} Airport (ICAO):
-            <input type="text" class="gcr-input" data-field="otherAirport" data-index="${index}" maxlength="4" placeholder="LSZH" value="${flight.otherAirport}" />
+            ${flight.isArrival ? 'Origin' : 'Dest.'}:
+            <input type="text" class="gcr-input gcr-input-xs" data-field="otherAirport" data-index="${index}" maxlength="4" placeholder="LSZH" value="${flight.otherAirport}" />
           </label>
           <label>
-            Time (HHMM UTC):
-            <input type="text" class="gcr-input" data-field="time" data-index="${index}" maxlength="4" placeholder="0900" value="${flight.time}" />
+            Time (UTC):
+            <input type="text" class="gcr-input gcr-input-sm" data-field="time" data-index="${index}" maxlength="4" placeholder="0900" value="${flight.time}" />
           </label>
-          <label>
-            Seat Count:
-            <input type="number" class="gcr-input" data-field="seatCount" data-index="${index}" min="0" max="999" placeholder="10" value="${flight.seatCount}" />
-          </label>
-          <label>
-            Aircraft Type (ICAO):
-            <input type="text" class="gcr-input" data-field="aircraftType" data-index="${index}" maxlength="4" placeholder="G159" value="${flight.aircraftType}" />
-          </label>
-          <label>
-            Flight Type:
-            <select class="gcr-select" data-field="flightType" data-index="${index}">
-              ${(['D', 'I', 'N'] as FlightType[]).map(type => `<option value="${type}" ${flight.flightType === type ? 'selected' : ''}>${type} - ${FLIGHT_TYPE_DESCRIPTIONS[type]}</option>`).join('')}
-            </select>
-          </label>
-          <label>
-            Slot ID (Optional):
-            <input type="text" class="gcr-input" data-field="slotId" data-index="${index}" placeholder="EDDF3010070001" value="${flight.slotId}" />
-          </label>
+          ${showSlotId ? `<label>
+            Slot ID:
+            <input type="text" class="gcr-input gcr-input-lg" data-field="slotId" data-index="${index}" placeholder="EDDF3010070001" value="${flight.slotId}" />
+          </label>` : ''}
         </div>
       `;
 
@@ -256,6 +273,7 @@ export class EncoderUI {
         removeBtn.addEventListener('click', () => {
           this.flights.splice(index, 1);
           this.renderFlights();
+          this.generate();
         });
       }
 
@@ -273,17 +291,19 @@ export class EncoderUI {
 
       if (field === 'isArrival') {
         value = target.value === 'true';
-      } else if (field === 'identifier' || field === 'otherAirport' || field === 'aircraftType' || field === 'date') {
+      } else if (field === 'otherAirport' || field === 'date') {
         value = target.value.toUpperCase();
         target.value = value;
       }
 
       (this.flights[index] as any)[field] = value;
 
-      // Re-render if direction changed to update label
-      if (field === 'isArrival') {
+      // Re-render if direction or action code changed to update UI
+      if (field === 'isArrival' || field === 'actionCode') {
         this.renderFlights();
       }
+
+      this.generate();
     }
   }
 
@@ -292,6 +312,19 @@ export class EncoderUI {
 
     // Validate and build message
     const errors: string[] = [];
+
+    // Validate top-level fields
+    if (!this.identifier) {
+      errors.push(`${this.identifierType === 'FLT' ? 'Flight number' : 'Registration'} is required`);
+    }
+
+    if (!this.seatCount || parseInt(this.seatCount, 10) < 0 || parseInt(this.seatCount, 10) > 999) {
+      errors.push('Seat count must be 0-999');
+    }
+
+    if (!/^[A-Z0-9]{3,4}$/.test(this.aircraftType)) {
+      errors.push('Aircraft type must be 3-4 alphanumeric characters');
+    }
 
     if (!this.coordinationAirport || !/^[A-Z]{4}$/.test(this.coordinationAirport)) {
       errors.push('Coordination airport must be a 4-letter ICAO code');
@@ -302,10 +335,6 @@ export class EncoderUI {
     this.flights.forEach((flight, index) => {
       const prefix = `Flight ${index + 1}`;
 
-      if (!flight.identifier) {
-        errors.push(`${prefix}: ${this.identifierType === 'FLT' ? 'Flight number' : 'Registration'} is required`);
-      }
-
       if (!/^\d{2}[A-Z]{3}$/.test(flight.date)) {
         errors.push(`${prefix}: Date must be in DDMMM format (e.g., 08JUN)`);
       } else {
@@ -313,14 +342,6 @@ export class EncoderUI {
         if (!MONTHS.includes(month)) {
           errors.push(`${prefix}: Invalid month in date`);
         }
-      }
-
-      if (!flight.seatCount || parseInt(flight.seatCount, 10) < 0 || parseInt(flight.seatCount, 10) > 999) {
-        errors.push(`${prefix}: Seat count must be 0-999`);
-      }
-
-      if (!/^[A-Z0-9]{3,4}$/.test(flight.aircraftType)) {
-        errors.push(`${prefix}: Aircraft type must be 3-4 alphanumeric characters`);
       }
 
       if (!/^[A-Z]{4}$/.test(flight.otherAirport)) {
@@ -334,14 +355,14 @@ export class EncoderUI {
       if (errors.length === 0) {
         flightLines.push({
           actionCode: flight.actionCode,
-          identifier: flight.identifier,
+          identifier: this.identifier,
           date: flight.date,
-          seatCount: parseInt(flight.seatCount, 10),
-          aircraftType: flight.aircraftType,
+          seatCount: parseInt(this.seatCount, 10),
+          aircraftType: this.aircraftType,
           isArrival: flight.isArrival,
           otherAirport: flight.otherAirport,
           time: flight.time,
-          flightType: flight.flightType,
+          flightType: this.flightType,
           slotId: flight.slotId || undefined
         });
       }
