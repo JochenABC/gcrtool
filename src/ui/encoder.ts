@@ -83,30 +83,30 @@ export class EncoderUI {
       <header><h3>Request Details</h3></header>
       <div class="gcr-form-flex">
         <label>
-          Coord. Airport:
+          Coord. Airport
           <input type="text" id="gcr-coord-airport" class="gcr-input gcr-input-xs" maxlength="4" placeholder="EDDF" value="${this.coordinationAirport}" />
         </label>
         <label>
-          Identifier Type:
+          Identifier Type
           <select id="gcr-id-type" class="gcr-select gcr-select-md">
             <option value="REG" ${this.identifierType === 'REG' ? 'selected' : ''}>Registration (REG)</option>
             <option value="FLT" ${this.identifierType === 'FLT' ? 'selected' : ''}>Flight Number (FLT)</option>
           </select>
         </label>
         <label>
-          ${this.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}:
+          ${this.identifierType === 'FLT' ? 'Flight Number' : 'Registration'}
           <input type="text" id="gcr-identifier" class="gcr-input gcr-input-md" placeholder="${this.identifierType === 'FLT' ? 'ABC123' : 'HBIEV'}" value="${this.identifier}" />
         </label>
         <label>
-          Aircraft Type:
+          Aircraft Type
           <input type="text" id="gcr-aircraft-type" class="gcr-input gcr-input-xs" maxlength="4" placeholder="G159" value="${this.aircraftType}" />
         </label>
         <label>
-          Seats:
+          Seats
           <input type="number" id="gcr-seat-count" class="gcr-input gcr-input-xs" min="0" max="999" placeholder="10" value="${this.seatCount}" />
         </label>
         <label>
-          Flight Type:
+          Flight Type
           <select id="gcr-flight-type" class="gcr-select gcr-select-lg">
             ${(['D', 'I', 'N'] as FlightType[]).map(type => `<option value="${type}" ${this.flightType === type ? 'selected' : ''}>${type} - ${FLIGHT_TYPE_DESCRIPTIONS[type]}</option>`).join('')}
           </select>
@@ -175,13 +175,13 @@ export class EncoderUI {
       <div class="gcr-collapsible-content">
         <div class="gcr-form-row">
           <label>
-            SI (Special Information):
+            SI (Special Information)
             <input type="text" id="gcr-si" class="gcr-input gcr-input-wide" placeholder="IF NOT AVBL PLS CFM NEXT LATER POSS" value="${this.siText}" />
           </label>
         </div>
         <div class="gcr-form-row">
           <label>
-            GI (General Information):
+            GI (General Information)
             <input type="text" id="gcr-gi" class="gcr-input gcr-input-wide" placeholder="BRGDS" value="${this.giText}" />
           </label>
         </div>
